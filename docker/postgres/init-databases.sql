@@ -1,0 +1,16 @@
+CREATE USER identity_user WITH PASSWORD 'identity_password';
+CREATE DATABASE identity_db OWNER identity_user;
+CREATE USER device_user WITH PASSWORD 'device_password';
+CREATE DATABASE device_db OWNER device_user;
+CREATE USER request_user WITH PASSWORD 'request_password';
+CREATE DATABASE request_db OWNER request_user;
+CREATE USER workorder_user WITH PASSWORD 'workorder_password';
+CREATE DATABASE workorder_db OWNER workorder_user;
+CREATE USER catalog_user WITH PASSWORD 'catalog_password';
+CREATE DATABASE catalog_db OWNER catalog_user;
+CREATE USER payment_user WITH PASSWORD 'payment_password';
+CREATE DATABASE payment_db OWNER payment_user;
+CREATE USER notification_user WITH PASSWORD 'notification_password';
+CREATE DATABASE notification_db OWNER notification_user;
+CREATE USER analytics_user WITH PASSWORD 'analytics_password';
+CREATE DATABASE analytics_db OWNER analytics_user;

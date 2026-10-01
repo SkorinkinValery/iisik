@@ -1,0 +1,16 @@
+syntax = "proto3";
+package repair.platform.v1;
+option java_package = "by.bsuir.repair.contract";
+option java_multiple_files = true;
+message Empty {}
+message JsonMessage { string json = 1; }
+message SessionRequest { string session_id = 1; }
+message AccessResponse { bool active = 1; string user_id = 2; string email = 3; string role = 4; }
+service IdentityService { rpc Register(JsonMessage) returns (JsonMessage); rpc Login(JsonMessage) returns (JsonMessage); rpc Logout(SessionRequest) returns (Empty); rpc ValidateSession(SessionRequest) returns (AccessResponse); rpc GetUserAccess(JsonMessage) returns (JsonMessage); rpc ListUsers(JsonMessage) returns (JsonMessage); rpc ChangeRole(JsonMessage) returns (JsonMessage); rpc SetEnabled(JsonMessage) returns (JsonMessage); }
+service DeviceService { rpc GetDevice(JsonMessage) returns (JsonMessage); rpc ListClientDevices(JsonMessage) returns (JsonMessage); rpc UpsertDevice(JsonMessage) returns (JsonMessage); rpc UpsertCategory(JsonMessage) returns (JsonMessage); rpc ValidateOwnership(JsonMessage) returns (JsonMessage); }
+service RepairRequestService { rpc GetRequest(JsonMessage) returns (JsonMessage); rpc ListRequests(JsonMessage) returns (JsonMessage); rpc CreateRequest(JsonMessage) returns (JsonMessage); rpc ChangeStatus(JsonMessage) returns (JsonMessage); rpc GetRequestSnapshot(JsonMessage) returns (JsonMessage); }
+service WorkOrderService { rpc GetWorkOrder(JsonMessage) returns (JsonMessage); rpc ListWorkOrders(JsonMessage) returns (JsonMessage); rpc DiagnoseAndCreate(JsonMessage) returns (JsonMessage); rpc AddService(JsonMessage) returns (JsonMessage); rpc AddPart(JsonMessage) returns (JsonMessage); rpc Recalculate(JsonMessage) returns (JsonMessage); rpc ChangeStatus(JsonMessage) returns (JsonMessage); rpc GetSummary(JsonMessage) returns (JsonMessage); }
+service CatalogService { rpc ListServices(JsonMessage) returns (JsonMessage); rpc ListParts(JsonMessage) returns (JsonMessage); rpc UpsertService(JsonMessage) returns (JsonMessage); rpc UpsertPart(JsonMessage) returns (JsonMessage); rpc CheckParts(JsonMessage) returns (JsonMessage); rpc ReserveParts(JsonMessage) returns (JsonMessage); }
+service PaymentService { rpc ListPayments(JsonMessage) returns (JsonMessage); rpc RegisterPayment(JsonMessage) returns (JsonMessage); rpc GetPaymentStatus(JsonMessage) returns (JsonMessage); }
+service NotificationService { rpc ListNotifications(JsonMessage) returns (JsonMessage); rpc MarkRead(JsonMessage) returns (JsonMessage); }
+service AnalyticsService { rpc GetAnalytics(JsonMessage) returns (JsonMessage); }

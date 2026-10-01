@@ -1,0 +1,4 @@
+CREATE TABLE notifications(id UUID PRIMARY KEY,user_id UUID NOT NULL,event_id UUID NOT NULL UNIQUE,type VARCHAR(100) NOT NULL,channel VARCHAR(30) NOT NULL,message VARCHAR(1000) NOT NULL,delivery_status VARCHAR(30) NOT NULL,read_at TIMESTAMP WITH TIME ZONE,created_at TIMESTAMP WITH TIME ZONE NOT NULL);
+CREATE INDEX idx_notifications_user ON notifications(user_id,created_at);
+CREATE TABLE outbox_events(event_id UUID PRIMARY KEY,topic VARCHAR(120) NOT NULL,aggregate_id UUID NOT NULL,event_type VARCHAR(100) NOT NULL,payload TEXT NOT NULL,created_at TIMESTAMP WITH TIME ZONE NOT NULL,published BOOLEAN NOT NULL,published_at TIMESTAMP WITH TIME ZONE);
+CREATE TABLE processed_events(event_id UUID PRIMARY KEY,processed_at TIMESTAMP WITH TIME ZONE NOT NULL);

@@ -1,0 +1,6 @@
+CREATE TABLE device_categories(id UUID PRIMARY KEY,name VARCHAR(150) NOT NULL UNIQUE,active BOOLEAN NOT NULL);
+CREATE TABLE devices(id UUID PRIMARY KEY,client_id UUID NOT NULL,category_id UUID NOT NULL REFERENCES device_categories(id),brand VARCHAR(100) NOT NULL,model VARCHAR(100) NOT NULL,serial_number VARCHAR(150) NOT NULL UNIQUE,created_at TIMESTAMP WITH TIME ZONE NOT NULL,updated_at TIMESTAMP WITH TIME ZONE NOT NULL);
+CREATE INDEX idx_devices_client ON devices(client_id);
+CREATE TABLE outbox_events(event_id UUID PRIMARY KEY,topic VARCHAR(120) NOT NULL,aggregate_id UUID NOT NULL,event_type VARCHAR(100) NOT NULL,payload TEXT NOT NULL,created_at TIMESTAMP WITH TIME ZONE NOT NULL,published BOOLEAN NOT NULL,published_at TIMESTAMP WITH TIME ZONE);
+CREATE TABLE processed_events(event_id UUID PRIMARY KEY,processed_at TIMESTAMP WITH TIME ZONE NOT NULL);
+INSERT INTO device_categories(id,name,active) VALUES('40000000-0000-0000-0000-000000000001','Стиральная машина',true),('40000000-0000-0000-0000-000000000002','Холодильник',true),('40000000-0000-0000-0000-000000000003','Телевизор',true);

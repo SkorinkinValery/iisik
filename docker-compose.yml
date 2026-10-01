@@ -1,0 +1,177 @@
+name: appliance-repair
+
+x-service-common: &service-common
+  restart: unless-stopped
+  depends_on:
+    postgres: { condition: service_healthy }
+    redis: { condition: service_healthy }
+    kafka: { condition: service_healthy }
+  environment: &common-environment
+    REDIS_HOST: redis
+    KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    JWT_SECRET: repair-service-educational-secret-key-change-me-2026
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment: { POSTGRES_USER: postgres, POSTGRES_PASSWORD: postgres, POSTGRES_DB: postgres }
+    ports: ["5434:5432"]
+    volumes:
+      - repair_postgres_data:/var/lib/postgresql/data
+      - ./docker/postgres/init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql:ro
+    healthcheck: { test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"], interval: 5s, timeout: 5s, retries: 30 }
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports: ["6379:6379"]
+    healthcheck: { test: ["CMD", "redis-cli", "ping"], interval: 5s, timeout: 3s, retries: 30 }
+
+  kafka:
+    image: apache/kafka:3.8.0
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+    ports: ["9092:9092"]
+    healthcheck: { test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"], interval: 10s, timeout: 10s, retries: 30 }
+
+  identity-service:
+    <<: *service-common
+    build: { context: ., args: { MODULE: identity-service } }
+    environment:
+      <<: *common-environment
+      DB_URL: jdbc:postgresql://postgres:5432/identity_db
+      DB_USERNAME: identity_user
+      DB_PASSWORD: identity_password
+    ports: ["8081:8081"]
+    healthcheck: { test: ["CMD-SHELL", "wget -qO- http://localhost:8081/actuator/health | grep -q UP"], interval: 10s, timeout: 5s, retries: 30 }
+
+  device-service:
+    <<: *service-common
+    build: { context: ., args: { MODULE: device-service } }
+    environment:
+      <<: *common-environment
+      DB_URL: jdbc:postgresql://postgres:5432/device_db
+      DB_USERNAME: device_user
+      DB_PASSWORD: device_password
+    healthcheck: { test: ["CMD-SHELL", "wget -qO- http://localhost:8082/actuator/health | grep -q UP"], interval: 10s, timeout: 5s, retries: 30 }
+
+  repair-request-service:
+    <<: *service-common
+    build: { context: ., args: { MODULE: repair-request-service } }
+    environment:
+      <<: *common-environment
+      DB_URL: jdbc:postgresql://postgres:5432/request_db
+      DB_USERNAME: request_user
+      DB_PASSWORD: request_password
+      DEVICE_GRPC_HOST: device-service
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+      device-service: { condition: service_healthy }
+    healthcheck: { test: ["CMD-SHELL", "wget -qO- http://localhost:8083/actuator/health | grep -q UP"], interval: 10s, timeout: 5s, retries: 30 }
+
+  catalog-service:
+    <<: *service-common
+    build: { context: ., args: { MODULE: catalog-service } }
+    environment:
+      <<: *common-environment
+      DB_URL: jdbc:postgresql://postgres:5432/catalog_db
+      DB_USERNAME: catalog_user
+      DB_PASSWORD: catalog_password
+    healthcheck: { test: ["CMD-SHELL", "wget -qO- http://localhost:8085/actuator/health | grep -q UP"], interval: 10s, timeout: 5s, retries: 30 }
+
+  work-order-service:
+    <<: *service-common
+    build: { context: ., args: { MODULE: work-order-service } }
+    environment:
+      <<: *common-environment
+      DB_URL: jdbc:postgresql://postgres:5432/workorder_db
+      DB_USERNAME: workorder_user
+      DB_PASSWORD: workorder_password
+      REQUEST_GRPC_HOST: repair-request-service
+      CATALOG_GRPC_HOST: catalog-service
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+      repair-request-service: { condition: service_healthy }
+      catalog-service: { condition: service_healthy }
+    healthcheck: { test: ["CMD-SHELL", "wget -qO- http://localhost:8084/actuator/health | grep -q UP"], interval: 10s, timeout: 5s, retries: 30 }
+
+  payment-service:
+    <<: *service-common
+    build: { context: ., args: { MODULE: payment-service } }
+    environment:
+      <<: *common-environment
+      DB_URL: jdbc:postgresql://postgres:5432/payment_db
+      DB_USERNAME: payment_user
+      DB_PASSWORD: payment_password
+      WORK_ORDER_GRPC_HOST: work-order-service
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      kafka: { condition: service_healthy }
+      work-order-service: { condition: service_healthy }
+    healthcheck: { test: ["CMD-SHELL", "wget -qO- http://localhost:8086/actuator/health | grep -q UP"], interval: 10s, timeout: 5s, retries: 30 }
+
+  notification-service:
+    <<: *service-common
+    build: { context: ., args: { MODULE: notification-service } }
+    environment:
+      <<: *common-environment
+      DB_URL: jdbc:postgresql://postgres:5432/notification_db
+      DB_USERNAME: notification_user
+      DB_PASSWORD: notification_password
+    healthcheck: { test: ["CMD-SHELL", "wget -qO- http://localhost:8087/actuator/health | grep -q UP"], interval: 10s, timeout: 5s, retries: 30 }
+
+  analytics-service:
+    <<: *service-common
+    build: { context: ., args: { MODULE: analytics-service } }
+    environment:
+      <<: *common-environment
+      DB_URL: jdbc:postgresql://postgres:5432/analytics_db
+      DB_USERNAME: analytics_user
+      DB_PASSWORD: analytics_password
+    healthcheck: { test: ["CMD-SHELL", "wget -qO- http://localhost:8088/actuator/health | grep -q UP"], interval: 10s, timeout: 5s, retries: 30 }
+
+  graphql-gateway:
+    restart: unless-stopped
+    build: { context: ., args: { MODULE: graphql-gateway } }
+    environment:
+      JWT_SECRET: repair-service-educational-secret-key-change-me-2026
+      IDENTITY_GRPC: identity-service:9101
+      DEVICE_GRPC: device-service:9102
+      REQUEST_GRPC: repair-request-service:9103
+      WORK_ORDER_GRPC: work-order-service:9104
+      CATALOG_GRPC: catalog-service:9105
+      PAYMENT_GRPC: payment-service:9106
+      NOTIFICATION_GRPC: notification-service:9107
+      ANALYTICS_GRPC: analytics-service:9108
+    depends_on:
+      identity-service: { condition: service_healthy }
+      device-service: { condition: service_healthy }
+      repair-request-service: { condition: service_healthy }
+      work-order-service: { condition: service_healthy }
+      catalog-service: { condition: service_healthy }
+      payment-service: { condition: service_healthy }
+      notification-service: { condition: service_healthy }
+      analytics-service: { condition: service_healthy }
+    ports: ["8080:8080"]
+    healthcheck: { test: ["CMD-SHELL", "wget -qO- http://localhost:8080/actuator/health | grep -q UP"], interval: 10s, timeout: 5s, retries: 30 }
+
+volumes:
+  repair_postgres_data:

@@ -1,0 +1,80 @@
+type Query {
+  me: User!
+  device(id: ID!): Device!
+  myDevices: [Device!]!
+  repairRequest(id: ID!): RepairRequest!
+  repairRequests(filter: RepairRequestFilterInput, sort: RepairRequestSortInput, page: Int = 0, size: Int = 20): RepairRequestPage!
+  workOrder(id: ID!): WorkOrder!
+  workOrders(sort: WorkOrderSortInput): WorkOrderPage!
+  serviceCatalog(activeOnly: Boolean = true): [ServiceItem!]!
+  spareParts(inStockOnly: Boolean = true): [SparePart!]!
+  payments(workOrderId: ID!): [Payment!]!
+  notifications(unreadOnly: Boolean = false): [Notification!]!
+  repairAnalytics(period: AnalyticsPeriodInput!): RepairAnalytics!
+  users: [User!]!
+}
+
+type Mutation {
+  register(input: RegisterInput!): User!
+  login(input: LoginInput!): AuthPayload!
+  logout: Boolean!
+  upsertDevice(input: UpsertDeviceInput!): Device!
+  createRepairRequest(input: CreateRepairRequestInput!): RepairRequest!
+  diagnoseAndCreateWorkOrder(input: DiagnoseWorkOrderInput!): WorkOrder!
+  addServiceToWorkOrder(input: AddServiceInput!): WorkOrder!
+  addPartToWorkOrder(input: AddPartInput!): WorkOrder!
+  recalculateWorkOrder(workOrderId: ID!): WorkOrder!
+  estimateRepairCost(input: EstimateRepairCostInput!): WorkOrder!
+  changeRepairRequestStatus(input: ChangeRepairRequestStatusInput!): RepairRequest!
+  changeWorkOrderStatus(input: ChangeWorkOrderStatusInput!): WorkOrder!
+  registerPayment(input: RegisterPaymentInput!): Payment!
+  markNotificationAsRead(id: ID!): Notification!
+  upsertService(input: UpsertServiceInput!): ServiceItem!
+  upsertSparePart(input: UpsertSparePartInput!): SparePart!
+  upsertDeviceCategory(input: UpsertDeviceCategoryInput!): DeviceCategory!
+  changeUserRole(userId: ID!, role: Role!): User!
+  setUserEnabled(userId: ID!, enabled: Boolean!): User!
+}
+
+enum Role { CLIENT EMPLOYEE ADMIN }
+enum RepairRequestStatus { NEW DIAGNOSING IN_PROGRESS READY COMPLETED CANCELLED }
+enum WorkOrderStatus { DIAGNOSED IN_PROGRESS READY COMPLETED CANCELLED }
+enum SortDirection { ASC DESC }
+enum RepairRequestSortField { COST PRIORITY CREATED_AT }
+enum WorkOrderSortField { TOTAL_AMOUNT CREATED_AT }
+
+input RegisterInput { email: String!, password: String!, fullName: String!, phone: String }
+input LoginInput { email: String!, password: String! }
+input UpsertDeviceInput { id: ID, clientId: ID, categoryId: ID!, brand: String!, model: String!, serialNumber: String! }
+input CreateRepairRequestInput { deviceId: ID!, problemDescription: String!, priority: Int = 3 }
+input DiagnoseWorkOrderInput { requestId: ID!, diagnosis: String! }
+input AddServiceInput { workOrderId: ID!, serviceId: ID!, quantity: Int = 1 }
+input AddPartInput { workOrderId: ID!, partId: ID!, quantity: Int = 1, idempotencyKey: String! }
+input EstimateRepairCostInput { requestId: ID!, serviceCost: Float, sparePartsCost: Float }
+input ChangeRepairRequestStatusInput { requestId: ID!, status: RepairRequestStatus! }
+input ChangeWorkOrderStatusInput { workOrderId: ID!, status: WorkOrderStatus! }
+input RegisterPaymentInput { workOrderId: ID!, method: String = "CARD", idempotencyKey: String! }
+input UpsertServiceInput { id: ID, name: String!, price: Float!, active: Boolean = true }
+input UpsertSparePartInput { id: ID, sku: String!, name: String!, price: Float!, stockQuantity: Int!, active: Boolean = true }
+input UpsertDeviceCategoryInput { id: ID, name: String!, active: Boolean = true }
+input RepairRequestFilterInput { status: RepairRequestStatus, createdFrom: String, createdTo: String, categoryId: ID }
+input RepairRequestSortInput { field: RepairRequestSortField = CREATED_AT, direction: SortDirection = DESC }
+input WorkOrderSortInput { field: WorkOrderSortField = CREATED_AT, direction: SortDirection = DESC }
+input AnalyticsPeriodInput { from: String!, to: String! }
+
+type User { id: ID!, email: String!, role: Role!, enabled: Boolean!, createdAt: String }
+type AuthPayload { accessToken: String!, tokenType: String!, sessionId: String!, expiresAt: String!, user: User! }
+type DeviceCategory { id: ID!, name: String!, active: Boolean! }
+type Device { id: ID!, clientId: ID!, brand: String!, model: String!, serialNumber: String!, categoryId: ID!, categoryName: String, createdAt: String }
+type RepairRequest { id: ID!, clientId: ID!, deviceId: ID!, deviceCategoryId: ID!, status: RepairRequestStatus!, priority: Int!, problemDescription: String!, estimatedCost: Float, createdAt: String!, updatedAt: String!, device: Device, workOrder: WorkOrder }
+type RepairRequestPage { items: [RepairRequest!]!, page: Int!, size: Int!, totalElements: Int!, totalPages: Int! }
+type WorkOrderLine { serviceId: ID, partId: ID, name: String!, price: Float!, quantity: Int!, lineTotal: Float! }
+type WorkOrder { id: ID!, repairRequestId: ID!, clientId: ID!, employeeId: ID!, diagnosis: String!, status: WorkOrderStatus!, totalAmount: Float!, services: [WorkOrderLine!]!, parts: [WorkOrderLine!]!, createdAt: String!, updatedAt: String! }
+type WorkOrderPage { items: [WorkOrder!]!, totalElements: Int! }
+type ServiceItem { id: ID!, name: String!, price: Float!, active: Boolean! }
+type SparePart { id: ID!, sku: String!, name: String!, price: Float!, stockQuantity: Int!, active: Boolean! }
+type Payment { id: ID!, workOrderId: ID!, clientId: ID!, amount: Float!, method: String!, status: String!, providerPaymentId: String, paidAt: String, createdAt: String! }
+type Notification { id: ID!, clientId: ID!, type: String!, title: String!, message: String!, read: Boolean!, createdAt: String! }
+type PopularService { name: String!, usageCount: Int!, revenue: Float! }
+type EmployeeWorkload { employeeId: ID!, assignedCount: Int!, completedCount: Int! }
+type RepairAnalytics { repairsCount: Int!, completedCount: Int!, revenue: Float!, avgDurationHours: Float!, mostRequestedService: String!, popularServices: [PopularService!]!, employeeWorkload: [EmployeeWorkload!]! }

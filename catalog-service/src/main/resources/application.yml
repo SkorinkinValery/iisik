@@ -1,0 +1,17 @@
+spring:
+  application.name: catalog-service
+  datasource:
+    url: ${DB_URL:jdbc:h2:mem:catalog;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+  flyway.enabled: true
+  data.redis.host: ${REDIS_HOST:localhost}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+server.port: ${HTTP_PORT:8085}
+grpc.server.port: ${GRPC_PORT:9105}
+management.endpoints.web.exposure.include: health,info

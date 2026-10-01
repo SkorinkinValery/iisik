@@ -1,0 +1,26 @@
+server:
+  port: ${SERVER_PORT:8080}
+spring:
+  application:
+    name: graphql-gateway
+  graphql:
+    graphiql:
+      enabled: true
+services:
+  identity: ${IDENTITY_GRPC:localhost:9101}
+  device: ${DEVICE_GRPC:localhost:9102}
+  request: ${REQUEST_GRPC:localhost:9103}
+  work-order: ${WORK_ORDER_GRPC:localhost:9104}
+  catalog: ${CATALOG_GRPC:localhost:9105}
+  payment: ${PAYMENT_GRPC:localhost:9106}
+  notification: ${NOTIFICATION_GRPC:localhost:9107}
+  analytics: ${ANALYTICS_GRPC:localhost:9108}
+security:
+  jwt:
+    secret: ${JWT_SECRET:repair-service-educational-secret-key-change-me-2026}
+    issuer: repair-auth-service
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -1,0 +1,4 @@
+CREATE TABLE payments(id UUID PRIMARY KEY,work_order_id UUID NOT NULL,client_id UUID NOT NULL,amount DECIMAL(12,2) NOT NULL CHECK(amount>0),method VARCHAR(30) NOT NULL,status VARCHAR(30) NOT NULL,provider_payment_id VARCHAR(100) NOT NULL UNIQUE,idempotency_key VARCHAR(100) NOT NULL UNIQUE,paid_at TIMESTAMP WITH TIME ZONE,created_at TIMESTAMP WITH TIME ZONE NOT NULL);
+CREATE INDEX idx_payments_order ON payments(work_order_id); CREATE INDEX idx_payments_client ON payments(client_id);
+CREATE TABLE outbox_events(event_id UUID PRIMARY KEY,topic VARCHAR(120) NOT NULL,aggregate_id UUID NOT NULL,event_type VARCHAR(100) NOT NULL,payload TEXT NOT NULL,created_at TIMESTAMP WITH TIME ZONE NOT NULL,published BOOLEAN NOT NULL,published_at TIMESTAMP WITH TIME ZONE);
+CREATE TABLE processed_events(event_id UUID PRIMARY KEY,processed_at TIMESTAMP WITH TIME ZONE NOT NULL);

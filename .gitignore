@@ -1,0 +1,7 @@
+target/
+.idea/
+*.iml
+.env
+data/
+*.docx
+*.pdf

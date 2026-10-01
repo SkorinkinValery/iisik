@@ -1,0 +1,24 @@
+spring:
+  application.name: identity-service
+  datasource:
+    url: ${DB_URL:jdbc:h2:mem:identity;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+  flyway.enabled: true
+  data.redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+server.port: ${HTTP_PORT:8081}
+grpc.server.port: ${GRPC_PORT:9101}
+security.jwt:
+  issuer: repair-auth-service
+  secret: ${JWT_SECRET:repair-service-development-secret-key-2026}
+  lifetime: PT2H
+management.endpoints.web.exposure.include: health,info
+logging.pattern.console: "%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} level=%-5level service=${spring.application.name} correlationId=%X{correlationId:-none} logger=%logger{36} message=%msg%n"

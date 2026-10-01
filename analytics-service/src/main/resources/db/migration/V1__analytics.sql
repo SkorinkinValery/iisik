@@ -1,0 +1,5 @@
+CREATE TABLE daily_repair_metrics(metric_date DATE PRIMARY KEY,requests_count INTEGER NOT NULL,completed_count INTEGER NOT NULL,revenue DECIMAL(14,2) NOT NULL,total_duration_hours DECIMAL(14,2) NOT NULL);
+CREATE TABLE service_demand_metrics(period_start DATE NOT NULL,service_id UUID NOT NULL,service_name VARCHAR(150) NOT NULL,usage_count INTEGER NOT NULL,revenue DECIMAL(14,2) NOT NULL,PRIMARY KEY(period_start,service_id));
+CREATE TABLE employee_workload_metrics(metric_date DATE NOT NULL,employee_id UUID NOT NULL,assigned_count INTEGER NOT NULL,completed_count INTEGER NOT NULL,PRIMARY KEY(metric_date,employee_id));
+CREATE TABLE outbox_events(event_id UUID PRIMARY KEY,topic VARCHAR(120) NOT NULL,aggregate_id UUID NOT NULL,event_type VARCHAR(100) NOT NULL,payload TEXT NOT NULL,created_at TIMESTAMP WITH TIME ZONE NOT NULL,published BOOLEAN NOT NULL,published_at TIMESTAMP WITH TIME ZONE);
+CREATE TABLE processed_events(event_id UUID PRIMARY KEY,processed_at TIMESTAMP WITH TIME ZONE NOT NULL);

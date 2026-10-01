@@ -1,0 +1,19 @@
+spring:
+  application.name: device-service
+  datasource:
+    url: ${DB_URL:jdbc:h2:mem:device;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1}
+    username: ${DB_USERNAME:sa}
+    password: ${DB_PASSWORD:}
+  flyway.enabled: true
+  data.redis:
+    host: ${REDIS_HOST:localhost}
+    port: ${REDIS_PORT:6379}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+server.port: ${HTTP_PORT:8082}
+grpc.server.port: ${GRPC_PORT:9102}
+management.endpoints.web.exposure.include: health,info
